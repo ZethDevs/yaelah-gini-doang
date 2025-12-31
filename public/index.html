@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div class="overlay" id="overlay">
+    <div class="modal login-modal">
+        <div class="modal-header">
+            <div class="header-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h2>Nathan - Tools</h2>
+            <p class="login-subtitle">Admin Dashboard</p>
+        </div>
+        <div class="modal-body">
+            <div class="input-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-key"></i>
+                    <input id="keyInput" type="password" placeholder="Enter admin key">
+                </div>
+                <button type="button" class="eye-toggle-btn" id="eyeToggle" onclick="toggleEye()">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <button class="btn-login" onclick="login()" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Login</span>
+            </button>
+            <!-- Login Status Messages -->
+            <div class="login-messages" id="loginMessages"></div>
+        </div>
+        <div class="modal-footer">
+            <div class="security-badge">
+                <i class="fas fa-shield-check"></i>
+                <i class="fas fa-shield-alt"></i>
+                <span><marquee>Powered By : Nathan X Leafions</marquee></span>
+                <!--span>Secure Connection • SSL Encrypted</span-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Modal (Add/Edit) -->
+<div class="modal-overlay" id="userModal" style="display: none;">
+    <div class="modal user-modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Add New User</h2>
+            <button class="close-btn" onclick="closeUserModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="userForm" onsubmit="saveUser(event)">
+                <input type="hidden" id="userId">
+                
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i> Username
+                    </label>
+                    <input type="text" id="username" required 
+                           placeholder="Enter username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="expires_in_days">
+                        <i class="fas fa-calendar-alt"></i> Expiry (Days)
+                    </label>
+                    <input type="number" id="expires_in_days" min="1" required 
+                           placeholder="Enter number of days">
+                </div>
+                
+                <div class="form-group" id="statusGroup" style="display: none;">
+                    <label for="status">
+                        <i class="fas fa-circle"></i> Status
+                    </label>
+                    <select id="status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeUserModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary" id="saveBtn">
+                        Save User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal" style="display: none;">
+    <div class="modal delete-modal">
+        <div class="modal-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>Confirm Deletion</h2>
+        </div>
+        <div class="modal-body">
+            <p id="deleteMessage">Are you sure you want to delete this user?</p>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeDeleteModal()">
+                    Cancel
+                </button>
+                <button type="button" class="btn-danger" onclick="confirmDelete()">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Dashboard -->
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>Nathan - Tools</h1>
+            </div>
+            <div class="version">v1.0</div>
+        </div>
+        
+        <div class="header-right">
+            <div class="last-update">
+                <i class="fas fa-sync-alt"></i>
+                Updated: <span id="lastUpdate">Just now</span>
+            </div>
+            <button class="btn-refresh" onclick="loadAll()">
+                <i class="fas fa-redo"></i> Refresh
+            </button>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div class="stat-info">
+                <h3>API Hits</h3>
+                <div class="stat-value" id="hit">0</div>
+                <div class="stat-trend">
+                    <i class="fas fa-arrow-up"></i> +12% today
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Active Users</h3>
+                <div class="stat-value" id="activeUsers">0</div>
+                <div class="stat-trend">
+                    <i class="fas fa-user-plus"></i> +3 new
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Server IP</h3>
+                <div class="stat-value ip-address" id="ip">127.0.0.1</div>
+                <div class="stat-trend">
+                    <i class="fas fa-check-circle"></i> Online
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>Uptime</h3>
+                <div class="stat-value" id="uptime">0s</div>
+                <div class="stat-trend">
+                    <i class="fas fa-history"></i> 99.9% Stable
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode Switch Card -->
+    <div class="card mode-card">
+        <div class="card-header">
+            <h3><i class="fas fa-toggle-on"></i> Service Mode</h3>
+            <div class="status-badge" id="modeBadge">OFFLINE</div>
+        </div>
+        <div class="card-body">
+            <p class="mode-description">
+                Switch between online and offline modes. Online mode serves encrypted scripts, 
+                offline mode serves static content.
+            </p>
+            <div class="mode-switch-container">
+                <div class="mode-switch-wrapper">
+                    <div class="glass-switch" id="modeSwitch" onclick="toggleMode()">
+                        <div class="knob" id="knob">
+                            <div class="knob-glow"></div>
+                        </div>
+                        <div class="switch-background"></div>
+                        <!--span class="off-label">OFF</span>
+                        <span class="on-label">ON</span-->
+                    </div>
+                </div>
+                <div class="mode-stats">
+                    <div class="mode-stat">
+                        <span class="stat-label">Current Status:</span>
+                        <span class="stat-value" id="modeText">OFFLINE</span>
+                    </div>
+                    <div class="mode-stat">
+                        <span class="stat-label">Last Changed:</span>
+                        <span class="stat-value" id="lastChanged">Never</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management Section -->
+    <div class="card users-card">
+        <div class="card-header">
+            <h3><i class="fas fa-users"></i> User Management</h3>
+            <div class="header-actions">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="userSearch" placeholder="Search users..." 
+                           onkeyup="searchUsers()">
+                </div>
+                <button class="btn-primary" onclick="openAddUserModal()">
+                    <i class="fas fa-plus"></i> Add User
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Status</th>
+                            <th>Days Remaining</th>
+                            <th>Created</th>
+                            <th>Expires</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+                <div class="table-footer">
+                    <div class="table-info">
+                        Showing <span id="userCount">0</span> users
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status Card -->
+    <div class="card system-card">
+        <div class="card-header">
+            <h3><i class="fas fa-heartbeat"></i> System Status</h3>
+        </div>
+        <div class="card-body">
+            <div class="status-grid">
+                <div class="status-item success">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>Server Health</h4>
+                        <p id="message">All systems operational</p>
+                    </div>
+                </div>
+                <div class="status-item warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <h4>Expiring Users</h4>
+                        <p id="expiringUsers">0 users expiring soon</p>
+                    </div>
+                </div>
+                <div class="status-item info">
+                    <i class="fas fa-database"></i>
+                    <div>
+                        <h4>Storage</h4>
+                        <p id="storageInfo">Users: 2 | Total: 2KB</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick API Info -->
+    <div class="card api-info-card">
+        <div class="card-header">
+            <h3><i class="fas fa-code"></i> API Information</h3>
+        </div>
+        <div class="card-body">
+            <div class="api-info-grid">
+                <div class="api-endpoint">
+                    <h4>Script API</h4>
+                    <code>GET /script</code>
+                    <p>Returns encrypted script based on current mode</p>
+                </div>
+                <div class="api-endpoint">
+                    <h4>Users API</h4>
+                    <code>GET /api/users?key=ADMIN_KEY</code>
+                    <p>Returns all users data (requires admin key)</p>
+                </div>
+                <div class="api-endpoint">
+                    <h4>Admin Panel</h4>
+                    <code>https://localhost:3000</code>
+                    <p>Access admin dashboard</p>
+                </div>
+                <div class="api-endpoint">
+                    <h4>Script Api</h4>
+                    <code>https://localhost:3000/script</code>
+                    <p>Access Script</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="panel.js"></script>
+</body>
+</html>
