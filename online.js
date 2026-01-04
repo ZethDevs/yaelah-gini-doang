@@ -3,7 +3,7 @@ const CONFIG = {
     FILE_PATH: "/sdcard/Movies/media.temp",
     ICON_URL: "https://i.ibb.co.com/ZRhP2mLQ/89cc46724d5ce9de493de87b083102fd-removebg-preview.png",
     TIMEOUT: 10000,
-    VIP_API_URL: "https://nathan-tools.koyeb.app/api/users/public"
+    VIP_API_URL: "https://nathan-panel.koyeb.app/api/users/public"
 };
 
 let ModState = {
